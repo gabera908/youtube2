@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم - فيديو بلس</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .admin-layout {
+      display: flex;
+      gap: 24px;
+      padding-top: 20px;
+    }
+    .admin-sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      position: sticky;
+      top: calc(var(--header-height) + 20px);
+      height: fit-content;
+    }
+    .admin-sidebar .sidebar-link {
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      margin-bottom: 4px;
+    }
+    .admin-sidebar .sidebar-link.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    .admin-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+      transition: transform var(--transition-fast);
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card .stat-number {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .stat-card .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .admin-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .admin-card h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 10px 14px;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-family: inherit;
+      direction: rtl;
+      transition: border-color var(--transition-fast);
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .btn-primary {
+      padding: 10px 28px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity var(--transition-fast);
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary {
+      padding: 10px 28px;
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .btn-danger {
+      padding: 6px 14px;
+      background: #d32f2f;
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .videos-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .videos-table th,
+    .videos-table td {
+      padding: 12px;
+      text-align: right;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .videos-table th {
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .videos-table tr:hover {
+      background: var(--bg-hover);
+    }
+    .videos-table .thumb {
+      width: 80px;
+      height: 45px;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+    }
+    .platform-tag {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #fff;
+      text-transform: uppercase;
+    }
+    .status-badge {
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .status-active { background: #2e7d32; color: #fff; }
+    .status-inactive { background: #757575; color: #fff; }
+    .toast-success {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #2e7d32;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      z-index: 3000;
+      transition: transform 0.3s ease;
+    }
+    .toast-success.show { transform: translateX(-50%) translateY(0); }
+    .toast-error {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #d32f2f;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      z-index: 3000;
+      transition: transform 0.3s ease;
+    }
+    .toast-error.show { transform: translateX(-50%) translateY(0); }
+    .empty-msg { text-align: center; padding: 32px; color: var(--text-secondary); }
+    .search-box { margin-bottom: 16px; }
+    .search-box input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    @media (max-width: 768px) {
+      .admin-layout { flex-direction: column; }
+      .admin-sidebar { width: 100%; min-width: 100%; position: static; }
+      .form-grid { grid-template-columns: 1fr; }
+      .videos-table { font-size: 0.78rem; }
+      .videos-table .thumb { width: 50px; height: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <button class="menu-toggle" aria-label="القائمة">☰</button>
+      <a href="../index.html" class="header-logo">فيديو<span>بلس</span></a>
+    </div>
+    <div class="header-search">
+      <span style="color:var(--text-secondary);font-size:0.9rem;">لوحة التحكم</span>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" title="تبديل السمة">🌙</button>
+    </div>
+  </header>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <main class="app-main" style="margin-right:0;padding:20px;">
+    <div class="admin-layout">
+
+      <!-- Admin Sidebar -->
+      <div class="admin-sidebar">
+        <div class="sidebar-link active" data-tab="dashboard">📊 الرئيسية</div>
+        <div class="sidebar-link" data-tab="add-video">➕ إضافة فيديو</div>
+        <div class="sidebar-link" data-tab="manage-videos">🎬 إدارة الفيديوهات</div>
+        <div class="sidebar-divider"></div>
+        <a href="../index.html" class="sidebar-link" style="text-decoration:none;">
+          <span>🏠</span> العودة للموقع
+        </a>
+      </div>
+
+      <!-- Admin Content -->
+      <div class="admin-content">
+
+        <!-- Dashboard Tab -->
+        <div class="tab-content active" id="tab-dashboard">
+          <div class="stats-grid" id="statsGrid">
+            <div class="stat-card"><div class="stat-number" id="statVideos">-</div><div class="stat-label">الفيديوهات</div></div>
+            <div class="stat-card"><div class="stat-number" id="statViews">-</div><div class="stat-label">المشاهدات</div></div>
+            <div class="stat-card"><div class="stat-number" id="statCategories">-</div><div class="stat-label">التصنيفات</div></div>
+            <div class="stat-card"><div class="stat-number" id="statChannels">-</div><div class="stat-label">القنوات</div></div>
+          </div>
+          <div class="admin-card">
+            <h2>أحدث الفيديوهات</h2>
+            <div id="recentVideos"><div class="empty-msg">جاري التحميل...</div></div>
+          </div>
+        </div>
+
+        <!-- Add Video Tab -->
+        <div class="tab-content" id="tab-add-video">
+          <div class="admin-card">
+            <h2>إضافة فيديو جديد</h2>
+            <form id="addVideoForm">
+              <div class="form-grid">
+                <div class="form-group full">
+                  <label>رابط الفيديو *</label>
+                  <input type="url" id="videoUrl" placeholder="https://youtube.com/watch?v=..." required>
+                </div>
+                <div class="form-group full">
+                  <label>العنوان *</label>
+                  <input type="text" id="videoTitle" placeholder="عنوان الفيديو" required>
+                </div>
+                <div class="form-group full">
+                  <label>الوصف</label>
+                  <textarea id="videoDesc" placeholder="وصف الفيديو..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label>التصنيف</label>
+                  <select id="videoCategory"><option value="">اختر التصنيف</option></select>
+                </div>
+                <div class="form-group">
+                  <label>القناة</label>
+                  <select id="videoChannel"><option value="">اختر القناة</option></select>
+                </div>
+                <div class="form-group full">
+                  <label>
+                    <input type="checkbox" id="videoFeatured"> فيديو مميز
+                  </label>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary" id="btnAddVideo">إضافة الفيديو</button>
+                <button type="reset" class="btn-secondary">مسح</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Manage Videos Tab -->
+        <div class="tab-content" id="tab-manage-videos">
+          <div class="admin-card">
+            <h2>إدارة الفيديوهات</h2>
+            <div class="search-box">
+              <input type="text" id="searchVideos" placeholder="بحث في الفيديوهات...">
+            </div>
+            <div id="videosList"><div class="empty-msg">جاري التحميل...</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-success" id="toastSuccess"></div>
+  <div class="toast-error" id="toastError"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>

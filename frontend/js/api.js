@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3030/api';
+const API_BASE = '/api';
 const API_TIMEOUT = 5000;
 const MAX_RETRIES = 1;
 
