@@ -353,8 +353,9 @@ async function loadWatchPage() {
 
   if (playerWrapper) playerWrapper.innerHTML = showLoadingSpinner();
 
-  const video = await fetchVideo(id);
-  if (!video) {
+  const result = await fetchVideo(id);
+  const video = result && result.data ? result.data : result;
+  if (!video || !video.id) {
     if (playerWrapper)
       playerWrapper.innerHTML = '<div class="empty-state"><p>الفيديو غير موجود</p></div>';
     return;
