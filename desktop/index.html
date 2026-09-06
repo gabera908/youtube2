@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
+  <title>مدير منصة فيديو بلس</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i class="fas fa-play"></i>
+        </div>
+        <h1>فيديو بلس</h1>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item active" data-section="dashboard" onclick="navigateTo('dashboard')">
+          <i class="fas fa-th-large"></i>
+          <span>لوحة التحكم</span>
+        </div>
+        <div class="nav-item" data-section="videos" onclick="navigateTo('videos')">
+          <i class="fas fa-video"></i>
+          <span>الفيديوهات</span>
+        </div>
+        <div class="nav-item" data-section="categories" onclick="navigateTo('categories')">
+          <i class="fas fa-folder"></i>
+          <span>التصنيفات</span>
+        </div>
+        <div class="nav-item" data-section="channels" onclick="navigateTo('channels')">
+          <i class="fas fa-tv"></i>
+          <span>القنوات</span>
+        </div>
+        <div class="nav-item" data-section="add-video" onclick="navigateTo('add-video')">
+          <i class="fas fa-plus-circle"></i>
+          <span>إضافة فيديو</span>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="header">
+        <h2 class="header-title" id="headerTitle">لوحة التحكم</h2>
+        <div class="header-actions">
+          <button class="btn btn-secondary btn-sm" onclick="loadSection(currentSection)">
+            <i class="fas fa-sync"></i> تحديث
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area" id="contentArea">
+        <!-- Content loaded dynamically -->
+      </div>
+
+      <footer class="status-bar">
+        <div class="status-indicator">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">جاري الاتصال...</span>
+        </div>
+        <span>مدير منصة فيديو بلس v1.0.0</span>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Loading Spinner -->
+  <div class="spinner-overlay" id="spinnerOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2>تأكيد الحذف</h2>
+        <button class="modal-close" onclick="closeModal('confirmModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-dialog">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h3>هل أنت متأكد؟</h3>
+          <p id="confirmMessage">سيتم حذف هذا العنصر نهائياً</p>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: center;">
+        <button class="btn btn-secondary" onclick="closeModal('confirmModal')">إلغاء</button>
+        <button class="btn btn-danger" onclick="executeDelete()">
+          <i class="fas fa-trash"></i> حذف
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Modal -->
+  <div class="modal-overlay" id="categoryModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 id="categoryModalTitle">إضافة تصنيف</h2>
+        <button class="modal-close" onclick="closeModal('categoryModal')">&times;</button>
+      </div>
+      <form id="categoryForm" onsubmit="saveCategory(event)">
+        <div class="modal-body">
+          <input type="hidden" name="id">
+          <div class="form-group">
+            <label>اسم التصنيف *</label>
+            <input type="text" class="form-control" name="name" required placeholder="أدخل اسم التصنيف">
+          </div>
+          <div class="form-group">
+            <label>الرابط (Slug)</label>
+            <input type="text" class="form-control" name="slug" placeholder="مثال: technology">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> حفظ
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('categoryModal')">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Channel Modal -->
+  <div class="modal-overlay" id="channelModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 id="channelModalTitle">إضافة قناة</h2>
+        <button class="modal-close" onclick="closeModal('channelModal')">&times;</button>
+      </div>
+      <form id="channelForm" onsubmit="saveChannel(event)">
+        <div class="modal-body">
+          <input type="hidden" name="id">
+          <div class="form-group">
+            <label>اسم القناة *</label>
+            <input type="text" class="form-control" name="name" required placeholder="أدخل اسم القناة">
+          </div>
+          <div class="form-group">
+            <label>الرابط (Slug)</label>
+            <input type="text" class="form-control" name="slug" placeholder="مثال: my-channel">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> حفظ
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('channelModal')">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

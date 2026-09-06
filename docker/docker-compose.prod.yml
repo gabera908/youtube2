@@ -1,0 +1,93 @@
+# Production Docker Compose Configuration
+# YouTube-like Video Platform
+
+services:
+  # Database Service (MySQL 8.0)
+  db:
+    image: mysql:8.0
+    container_name: video_platform_db_prod
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3366:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - video-network
+
+  # Redis Service
+  redis:
+    image: redis:7-alpine
+    container_name: video_platform_redis_prod
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - video-network
+
+  # Backend Service (Node.js)
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: video_platform_backend_prod
+    restart: always
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 3366
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${MYSQL_DATABASE}
+      PORT: 3030
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3030:3030"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - video-network
+
+  # Frontend Service (Nginx)
+  frontend:
+    build:
+      context: ../dist
+      dockerfile: ../frontend/Dockerfile
+    container_name: video_platform_frontend_prod
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - video-network
+
+# Docker Network
+networks:
+  video-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  mysql_data:
+  redis_data:

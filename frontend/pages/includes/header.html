@@ -1,0 +1,18 @@
+<header class="app-header">
+  <div class="header-left">
+    <button class="menu-toggle" aria-label="القائمة">☰</button>
+    <a href="/" class="header-logo">فيديو<span>بلس</span></a>
+  </div>
+
+  <div class="header-search">
+    <form class="search-form" action="/pages/search.html" method="get">
+      <input type="text" name="q" class="search-input" placeholder="ابحث عن فيديو...">
+      <button type="submit" class="search-btn">🔍</button>
+    </form>
+  </div>
+
+  <div class="header-actions">
+    <button class="theme-toggle" id="themeToggle" title="تبديل السمة">🌙</button>
+    <button class="header-icon" title="بحث" onclick="document.querySelector('.search-input').focus()">🔍</button>
+  </div>
+</header>

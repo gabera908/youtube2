@@ -1,0 +1,11 @@
+{
+  "name": "video-platform-frontend",
+  "version": "1.0.0",
+  "description": "Frontend tests for video platform utilities",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

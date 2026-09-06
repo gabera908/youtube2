@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>فيديو بلس</title>
+  <meta name="theme-color" content="#ff0000">
+  <link rel="manifest" href="../manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <button class="menu-toggle" aria-label="القائمة">☰</button>
+      <a href="../index.html" class="header-logo">فيديو<span>بلس</span></a>
+    </div>
+
+    <div class="header-search">
+      <form class="search-form" action="search.html" method="get">
+        <input type="text" name="q" class="search-input" placeholder="ابحث عن فيديو...">
+        <button type="submit" class="search-btn">🔍</button>
+      </form>
+    </div>
+
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" title="تبديل السمة">🌙</button>
+      <button class="header-icon" title="بحث" onclick="document.querySelector('.search-input').focus()">🔍</button>
+    </div>
+  </header>
+
+  <!-- Mobile Search -->
+  <div class="mobile-search">
+    <form class="search-form" action="search.html" method="get">
+      <input type="text" name="q" class="search-input" placeholder="ابحث عن فيديو...">
+      <button type="submit" class="search-btn">🔍</button>
+    </form>
+  </div>
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="app-sidebar" id="appSidebar">
+    <a href="../index.html" class="sidebar-link">
+      <span class="icon">🏠</span>
+      <span>الرئيسية</span>
+    </a>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-title">التصنيفات</div>
+    <nav class="sidebar-categories">
+      <div style="padding:12px 24px;color:#aaa;font-size:0.85rem;">جاري التحميل...</div>
+    </nav>
+    <div class="sidebar-divider"></div>
+    <a href="../index.html" class="sidebar-link">
+      <span class="icon">📺</span>
+      <span>اشتراكاتي</span>
+    </a>
+    <a href="../index.html" class="sidebar-link">
+      <span class="icon">📚</span>
+      <span>المكتبة</span>
+    </a>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="app-main">
+    <div class="search-results-info"></div>
+    <div class="video-grid"></div>
+    <div class="load-more-wrapper"></div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>© 2026 فيديو بلس. جميع الحقوق محفوظة.</p>
+  </footer>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/player.js"></script>
+  <script src="../js/app.js"></script>
+</body>
+</html>

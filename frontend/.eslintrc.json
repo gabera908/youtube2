@@ -1,0 +1,42 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "worker": true
+  },
+  "globals": {
+    "fetch": "readonly",
+    "navigator": "readonly",
+    "localStorage": "readonly",
+    "sessionStorage": "readonly",
+    "IntersectionObserver": "readonly",
+    "AbortController": "readonly",
+    "URL": "readonly",
+    "URLSearchParams": "readonly",
+    "document": "readonly",
+    "window": "readonly",
+    "console": "readonly",
+    "setTimeout": "readonly",
+    "clearTimeout": "readonly",
+    "setInterval": "readonly",
+    "clearInterval": "readonly"
+  },
+  "extends": ["eslint:recommended"],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", {
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^(fetchVideos|fetchVideo|fetchCategories|fetchCategory|fetchChannels|fetchChannel|searchVideos|loadMoreVideos|shareVideo|getEmbedHtml|getThumbnailUrl|formatViews|timeAgo|getPlatformBadgeClass|getPlatformLabel|loadHomePage|loadWatchPage|loadCategoryPage|loadChannelPage|loadSearchPage)$"
+    }],
+    "no-console": "off",
+    "eqeqeq": ["warn", "smart"],
+    "no-var": "off",
+    "prefer-const": "warn",
+    "no-undef": "off",
+    "no-redeclare": "off",
+    "no-case-declarations": "off"
+  }
+}
