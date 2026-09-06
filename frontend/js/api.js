@@ -6,7 +6,7 @@ async function apiRequest(endpoint, params = {}) {
   let lastError;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const url = new URL(`${API_BASE}${endpoint}`);
+      const url = new URL(`${API_BASE}${endpoint}`, window.location.origin);
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           url.searchParams.append(key, value);
