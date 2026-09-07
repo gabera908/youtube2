@@ -1,5 +1,5 @@
-const CACHE_NAME = 'videoplus-v1';
-const STATIC_CACHE = 'videoplus-static-v1';
+const CACHE_NAME = 'videoplus-v2';
+const STATIC_CACHE = 'videoplus-static-v2';
 
 const STATIC_ASSETS = [
   '/',
@@ -29,7 +29,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys
           .filter((key) => key !== CACHE_NAME && key !== STATIC_CACHE)
-          .map((key) => caches.delete(key))
+          .map((key) => { console.log('Deleting old cache:', key); return caches.delete(key); })
       );
     })
   );
