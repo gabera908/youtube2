@@ -39,3 +39,16 @@ docker/data/
 # Temporary
 tmp/
 temp/
+
+# Dev scripts (not part of project)
+*.tmp.js
+fix*.js
+debug*.js
+deploy*.js
+setup*.js
+ssh*.js
+test-ssh.js
+check*.js
+rebuild*.js
+cleanup*.js
+run*.ps1
