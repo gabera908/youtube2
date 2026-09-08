@@ -5,12 +5,30 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initAdmin() {
+  setupTheme();
   setupTabs();
   loadStats();
   loadRecentVideos();
   loadFormOptions();
   setupAddForm();
   setupSearch();
+}
+
+function setupTheme() {
+  const toggle = document.getElementById('themeToggle');
+  const html = document.documentElement;
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  html.setAttribute('data-theme', savedTheme);
+  if (toggle) toggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      toggle.textContent = next === 'dark' ? '🌙' : '☀️';
+    });
+  }
 }
 
 function setupTabs() {
