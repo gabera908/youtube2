@@ -97,7 +97,99 @@ async function loadFormOptions() {
 }
 
 function setupAddForm() {
-  document.getElementById('addVideoForm').addEventListener('submit', async (e) => {
+  const urlInput = document.getElementById('videoUrl');
+  const titleInput = document.getElementById('videoTitle');
+  const descInput = document.getElementById('videoDesc');
+  const previewEl = document.getElementById('videoPreview');
+
+  // Auto-fetch video info when URL is pasted
+  let fetchTimeout;
+  urlInput.addEventListener('input', (e) => {
+    clearTimeout(fetchTimeout);
+    const url = e.target.value.trim();
+    if (!url || url.length < 10) {
+      if (previewEl) previewEl.innerHTML = '';
+      return;
+    }
+    fetchTimeout = setTimeout(() => fetchVideoInfo(url), 500);
+  });
+
+  async function fetchVideoInfo(url) {
+    if (previewEl) previewEl.innerHTML = '<div style="color:var(--text-secondary);font-size:0.85rem;">جاري جلب معلومات الفيديو...</div>';
+
+    try {
+      // Try YouTube oEmbed first
+      const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/);
+      if (ytMatch) {
+        const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ytMatch[1]}&format=json`;
+        const res = await fetch(oembedUrl);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.title && !titleInput.value) titleInput.value = data.title;
+          if (data.thumbnail_url) {
+            if (previewEl) {
+              previewEl.innerHTML = `
+                <div style="display:flex;gap:12px;margin-top:12px;padding:12px;background:var(--bg-main);border-radius:8px;">
+                  <img src="${data.thumbnail_url}" style="width:160px;height:90px;object-fit:cover;border-radius:6px;">
+                  <div style="flex:1;">
+                    <div style="font-weight:600;font-size:0.9rem;margin-bottom:4px;">${escapeHtml(data.title)}</div>
+                    <div style="font-size:0.78rem;color:var(--text-secondary);">${escapeHtml(data.author_name || '')}</div>
+                  </div>
+                </div>`;
+            }
+            showToast('تم جلب معلومات الفيديو!');
+            return;
+          }
+        }
+      }
+
+      // Try Vimeo oEmbed
+      const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+      if (vimeoMatch) {
+        const oembedUrl = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`;
+        const res = await fetch(oembedUrl);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.title && !titleInput.value) titleInput.value = data.title;
+          if (data.thumbnail_url) {
+            if (previewEl) {
+              previewEl.innerHTML = `
+                <div style="display:flex;gap:12px;margin-top:12px;padding:12px;background:var(--bg-main);border-radius:8px;">
+                  <img src="${data.thumbnail_url}" style="width:160px;height:90px;object-fit:cover;border-radius:6px;">
+                  <div style="flex:1;">
+                    <div style="font-weight:600;font-size:0.9rem;margin-bottom:4px;">${escapeHtml(data.title)}</div>
+                    <div style="font-size:0.78rem;color:var(--text-secondary);">${escapeHtml(data.author_name || '')}</div>
+                  </div>
+                </div>`;
+            }
+            showToast('تم جلب معلومات الفيديو!');
+            return;
+          }
+        }
+      }
+
+      // Fallback: just extract ID and show thumbnail
+      if (ytMatch) {
+        const thumbUrl = `https://i.ytimg.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+        if (previewEl) {
+          previewEl.innerHTML = `
+            <div style="display:flex;gap:12px;margin-top:12px;padding:12px;background:var(--bg-main);border-radius:8px;">
+              <img src="${thumbUrl}" style="width:160px;height:90px;object-fit:cover;border-radius:6px;">
+              <div style="flex:1;">
+                <div style="font-size:0.85rem;color:var(--text-secondary);">YouTube Video</div>
+                <div style="font-size:0.78rem;color:var(--text-secondary);">ID: ${ytMatch[1]}</div>
+              </div>
+            </div>`;
+        }
+      } else {
+        if (previewEl) previewEl.innerHTML = '';
+      }
+
+    } catch (err) {
+      console.error('Fetch video info error:', err);
+      if (previewEl) previewEl.innerHTML = '<div style="color:var(--text-secondary);font-size:0.85rem;">تعذر جلب المعلومات</div>';
+    }
+  }
     e.preventDefault();
     const btn = document.getElementById('btnAddVideo');
     btn.disabled = true;
