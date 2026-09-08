@@ -306,19 +306,17 @@ router.put(
   }
 );
 
-// DELETE /api/videos/:id (soft delete)
+// DELETE /api/videos/:id (hard delete)
 router.delete('/:id', [param('id').isInt({ min: 1 }).toInt()], async (req, res, next) => {
   try {
     validate(req);
 
-    const [existing] = await pool.query('SELECT * FROM videos WHERE id = ? AND is_active = 1', [
-      req.params.id,
-    ]);
+    const [existing] = await pool.query('SELECT * FROM videos WHERE id = ?', [req.params.id]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, error: { message: 'Video not found' } });
     }
 
-    await pool.query('UPDATE videos SET is_active = 0 WHERE id = ?', [req.params.id]);
+    await pool.query('DELETE FROM videos WHERE id = ?', [req.params.id]);
 
     res.json({ success: true, message: 'Video deleted successfully' });
   } catch (err) {
