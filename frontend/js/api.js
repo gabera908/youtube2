@@ -64,3 +64,55 @@ function fetchChannel(slug) {
 function searchVideos(query) {
   return apiRequest('/videos', { search: query });
 }
+
+async function apiMutate(method, endpoint, body) {
+  try {
+    const url = new URL(`${API_BASE}${endpoint}`, window.location.origin);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    const response = await fetch(url.toString(), {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      return data || { success: false, error: { message: `HTTP ${response.status}` } };
+    }
+    return data;
+  } catch (error) {
+    console.error(`API Error [${method} ${endpoint}]:`, error);
+    return { success: false, error: { message: 'خطأ في الاتصال بالخادم' } };
+  }
+}
+
+/* ===== Playlists ===== */
+function fetchPlaylists() {
+  return apiRequest('/playlists');
+}
+
+function fetchPlaylist(id) {
+  return apiRequest(`/playlists/${id}`);
+}
+
+function createPlaylist(payload) {
+  return apiMutate('POST', '/playlists', payload);
+}
+
+function updatePlaylist(id, payload) {
+  return apiMutate('PUT', `/playlists/${id}`, payload);
+}
+
+function deletePlaylist(id) {
+  return apiMutate('DELETE', `/playlists/${id}`);
+}
+
+function addVideoToPlaylist(playlistId, videoId) {
+  return apiMutate('POST', `/playlists/${playlistId}/videos`, { video_id: videoId });
+}
+
+function removeVideoFromPlaylist(playlistId, videoId) {
+  return apiMutate('DELETE', `/playlists/${playlistId}/videos/${videoId}`);
+}

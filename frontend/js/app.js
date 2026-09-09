@@ -218,6 +218,10 @@ function initPage() {
     loadChannelPage();
   } else if (path.includes('search.html')) {
     loadSearchPage();
+  } else if (path.includes('playlists.html')) {
+    loadPlaylistsPage();
+  } else if (path.includes('playlist.html')) {
+    loadPlaylistPage();
   }
 }
 
@@ -384,6 +388,7 @@ async function loadWatchPage() {
         <span class="video-views">${views} مشاهدة · ${published}</span>
         <div class="video-actions">
           <button class="btn-action" onclick="shareVideo('${currentUrl}')">🔗 مشاركة</button>
+          <button class="btn-action" onclick="openSaveToPlaylist(${video.id})">💾 حفظ</button>
         </div>
       </div>
       <div class="channel-info-section">
@@ -512,6 +517,235 @@ async function loadChannelPage() {
 
   const videos = result.videos || result.data || [];
   if (grid) renderVideoGrid(grid, videos);
+}
+
+/* ===== PLAYLISTS PAGES ===== */
+async function loadPlaylistsPage() {
+  const grid = document.getElementById('playlistsGrid');
+  if (!grid) return;
+
+  const result = await fetchPlaylists();
+  if (!result || !result.success) {
+    grid.innerHTML =
+      '<div class="empty-state"><div class="icon">📚</div><p>تعذر تحميل قوائم التشغيل</p><button class="btn-retry" onclick="loadPlaylistsPage()">إعادة المحاولة</button></div>';
+    return;
+  }
+
+  const playlists = result.data || [];
+  if (playlists.length === 0) {
+    grid.innerHTML =
+      '<div class="empty-state"><div class="icon">📚</div><p>لا توجد قوائم تشغيل بعد — أنشئ أول قائمة من الأعلى</p></div>';
+    return;
+  }
+
+  grid.innerHTML = playlists
+    .map((pl) => {
+      const cover = pl.cover_thumbnail
+        ? `<img src="${pl.cover_thumbnail}" alt="" loading="lazy" onerror="this.remove()">`
+        : '📚';
+      const count = pl.video_count || 0;
+      return `<div class="playlist-card" onclick="window.location.href='playlist.html?id=${pl.id}'">
+      <div class="playlist-cover">${cover}<span class="playlist-count">🎬 ${count}</span></div>
+      <div class="playlist-body">
+        <div class="playlist-title">${escapeHtml(pl.name || 'بدون اسم')}</div>
+        <div class="playlist-meta">${count} فيديو · ${timeAgo(pl.created_at)}</div>
+      </div>
+    </div>`;
+    })
+    .join('');
+}
+
+async function handleCreatePlaylist() {
+  const nameInput = document.getElementById('playlistName');
+  const descInput = document.getElementById('playlistDesc');
+  const btn = document.getElementById('btnCreatePlaylist');
+  const name = (nameInput.value || '').trim();
+  if (!name) {
+    showToast('أدخل اسم القائمة');
+    nameInput.focus();
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'جاري الإنشاء...';
+  const result = await createPlaylist({ name, description: (descInput.value || '').trim() });
+  btn.disabled = false;
+  btn.textContent = 'إنشاء القائمة';
+  if (result && result.success) {
+    showToast('تم إنشاء القائمة بنجاح');
+    nameInput.value = '';
+    descInput.value = '';
+    loadPlaylistsPage();
+  } else {
+    showToast((result && result.error && result.error.message) || 'حدث خطأ', 'error');
+  }
+}
+
+async function loadPlaylistPage() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (!id) {
+    window.location.href = 'playlists.html';
+    return;
+  }
+
+  const headerEl = document.getElementById('playlistHeader');
+  const videosEl = document.getElementById('playlistVideos');
+  if (videosEl)
+    videosEl.innerHTML =
+      '<div style="text-align:center;color:var(--text-secondary);padding:24px;">جاري التحميل...</div>';
+
+  const result = await fetchPlaylist(id);
+  if (!result || !result.success || !result.data) {
+    if (headerEl) headerEl.innerHTML = '<h1>القائمة غير موجودة</h1>';
+    if (videosEl) videosEl.innerHTML = '';
+    return;
+  }
+
+  const pl = result.data;
+  const videos = pl.videos || [];
+  document.title = `${pl.name} - فيديو بلس`;
+
+  if (headerEl) {
+    const firstId = videos.length > 0 ? videos[0].id : null;
+    headerEl.innerHTML = `
+      <h1>📚 ${escapeHtml(pl.name || 'بدون اسم')}</h1>
+      ${pl.description ? `<p>${escapeHtml(pl.description)}</p>` : ''}
+      <div class="playlist-meta" style="font-size:.8rem;color:var(--text-secondary);margin-bottom:12px;">${videos.length} فيديو</div>
+      <div class="playlist-actions">
+        ${firstId ? `<a class="btn-play-all" href="watch.html?id=${firstId}&list=${pl.id}">▶ تشغيل الكل</a>` : ''}
+        <button class="btn-danger-outline" onclick="handleDeletePlaylist(${pl.id})">🗑 حذف القائمة</button>
+      </div>`;
+  }
+
+  if (!videosEl) return;
+  if (videos.length === 0) {
+    videosEl.innerHTML =
+      '<div class="empty-state"><div class="icon">🎬</div><p>القائمة فارغة — أضف فيديوهات من زر الحفظ في صفحة المشاهدة</p></div>';
+    return;
+  }
+
+  videosEl.innerHTML = videos
+    .map((video) => {
+      const thumbnail = getThumbnailUrl(video);
+      const title = video.title || 'بدون عنوان';
+      const channelName = video.channel_name || '';
+      const views = formatViews(video.views || 0);
+      return `<div class="playlist-item">
+      <img src="${thumbnail}" alt="${escapeHtml(title)}" loading="lazy" onclick="window.location.href='watch.html?id=${video.id}&list=${pl.id}'" onerror="this.src='https://via.placeholder.com/160x90?text=Video'">
+      <div class="playlist-item-info">
+        <div class="playlist-item-title" onclick="window.location.href='watch.html?id=${video.id}&list=${pl.id}'">${escapeHtml(title)}</div>
+        <div class="playlist-item-meta">${escapeHtml(channelName)} · ${views} مشاهدة</div>
+      </div>
+      <button class="btn-remove" onclick="handleRemoveFromPlaylist(${pl.id}, ${video.id})">إزالة</button>
+    </div>`;
+    })
+    .join('');
+}
+
+async function handleRemoveFromPlaylist(playlistId, videoId) {
+  if (!confirm('إزالة هذا الفيديو من القائمة؟')) return;
+  const result = await removeVideoFromPlaylist(playlistId, videoId);
+  if (result && result.success) {
+    showToast('تمت الإزالة من القائمة');
+    loadPlaylistPage();
+  } else {
+    showToast((result && result.error && result.error.message) || 'حدث خطأ', 'error');
+  }
+}
+
+async function handleDeletePlaylist(playlistId) {
+  if (!confirm('حذف هذه القائمة نهائياً؟')) return;
+  const result = await deletePlaylist(playlistId);
+  if (result && result.success) {
+    showToast('تم حذف القائمة');
+    window.location.href = 'playlists.html';
+  } else {
+    showToast((result && result.error && result.error.message) || 'حدث خطأ', 'error');
+  }
+}
+
+/* ===== SAVE TO PLAYLIST MODAL ===== */
+let saveToPlaylistVideoId = null;
+
+async function openSaveToPlaylist(videoId) {
+  saveToPlaylistVideoId = videoId;
+  let modal = document.getElementById('savePlaylistModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'savePlaylistModal';
+    modal.style.cssText =
+      'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.innerHTML = `
+      <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:20px;width:100%;max-width:420px;max-height:80vh;overflow-y:auto;">
+        <h3 style="font-weight:700;margin-bottom:12px;color:var(--text-primary);">💾 حفظ في قائمة تشغيل</h3>
+        <div id="savePlaylistList" style="margin-bottom:12px;color:var(--text-secondary);font-size:.85rem;">جاري التحميل...</div>
+        <div style="display:flex;gap:8px;">
+          <input id="savePlaylistNewName" placeholder="قائمة جديدة..." maxlength="255" style="flex:1;background:var(--bg-main);border:1px solid var(--border-color);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:.85rem;">
+          <button onclick="handleQuickCreatePlaylist()" style="background:#ff0000;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:.85rem;">إنشاء</button>
+        </div>
+        <button onclick="closeSaveToPlaylist()" style="margin-top:12px;width:100%;background:transparent;border:1px solid var(--border-color);color:var(--text-secondary);border-radius:8px;padding:8px;cursor:pointer;">إغلاق</button>
+      </div>`;
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeSaveToPlaylist();
+    });
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+  await refreshSaveToPlaylistList();
+}
+
+function closeSaveToPlaylist() {
+  const modal = document.getElementById('savePlaylistModal');
+  if (modal) modal.style.display = 'none';
+  saveToPlaylistVideoId = null;
+}
+
+async function refreshSaveToPlaylistList() {
+  const listEl = document.getElementById('savePlaylistList');
+  if (!listEl) return;
+  const result = await fetchPlaylists();
+  const playlists = (result && result.success && result.data) || [];
+  if (playlists.length === 0) {
+    listEl.innerHTML = 'لا توجد قوائم بعد — أنشئ واحدة بالأسفل';
+    return;
+  }
+  listEl.innerHTML = playlists
+    .map(
+      (pl) =>
+        `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+      <span style="color:var(--text-primary);font-size:.9rem;">📚 ${escapeHtml(pl.name || 'بدون اسم')} <span style="color:var(--text-secondary);font-size:.75rem;">(${pl.video_count || 0})</span></span>
+      <button onclick="handleAddToPlaylist(${pl.id})" style="background:var(--bg-hover);border:1px solid var(--border-color);color:var(--text-primary);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:.8rem;">حفظ</button>
+    </div>`
+    )
+    .join('');
+}
+
+async function handleAddToPlaylist(playlistId) {
+  if (!saveToPlaylistVideoId) return;
+  const result = await addVideoToPlaylist(playlistId, saveToPlaylistVideoId);
+  if (result && result.success) {
+    showToast('تمت الإضافة إلى القائمة');
+    closeSaveToPlaylist();
+  } else {
+    showToast((result && result.error && result.error.message) || 'حدث خطأ', 'error');
+  }
+}
+
+async function handleQuickCreatePlaylist() {
+  const input = document.getElementById('savePlaylistNewName');
+  const name = (input.value || '').trim();
+  if (!name) {
+    showToast('أدخل اسم القائمة');
+    return;
+  }
+  const result = await createPlaylist({ name });
+  if (result && result.success) {
+    input.value = '';
+    await refreshSaveToPlaylistList();
+    showToast('تم إنشاء القائمة');
+  } else {
+    showToast((result && result.error && result.error.message) || 'حدث خطأ', 'error');
+  }
 }
 
 /* ===== SEARCH PAGE ===== */
