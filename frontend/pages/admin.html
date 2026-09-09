@@ -262,6 +262,7 @@
         <div class="sidebar-link active" data-tab="dashboard">📊 الرئيسية</div>
         <div class="sidebar-link" data-tab="add-video">➕ إضافة فيديو</div>
         <div class="sidebar-link" data-tab="manage-videos">🎬 إدارة الفيديوهات</div>
+        <div class="sidebar-link" data-tab="playlists">📚 قوائم التشغيل</div>
         <div class="sidebar-divider"></div>
         <a href="../index.html" class="sidebar-link" style="text-decoration:none;">
           <span>🏠</span> العودة للموقع
@@ -337,6 +338,33 @@
           </div>
         </div>
 
+        <!-- Playlists Tab -->
+        <div class="tab-content" id="tab-playlists">
+          <div class="admin-card">
+            <h2>إنشاء قائمة تشغيل</h2>
+            <form id="addPlaylistForm">
+              <div class="form-grid">
+                <div class="form-group full">
+                  <label>اسم القائمة *</label>
+                  <input type="text" id="playlistName" placeholder="مثال: أفضل الفيديوهات" maxlength="255" required>
+                </div>
+                <div class="form-group full">
+                  <label>الوصف</label>
+                  <textarea id="playlistDesc" placeholder="وصف القائمة..."></textarea>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary" id="btnAddPlaylist">إنشاء القائمة</button>
+                <button type="reset" class="btn-secondary">مسح</button>
+              </div>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h2>قوائم التشغيل الحالية</h2>
+            <div id="playlistsList"><div class="empty-msg">جاري التحميل...</div></div>
+          </div>
+        </div>
+
       </div>
     </div>
   </main>
@@ -344,7 +372,7 @@
   <div class="toast-success" id="toastSuccess"></div>
   <div class="toast-error" id="toastError"></div>
 
-  <script src="../js/api.js?v=3"></script>
-  <script src="../js/admin.js?v=3"></script>
+  <script src="../js/api.js?v=4"></script>
+  <script src="../js/admin.js?v=4"></script>
 </body>
 </html>

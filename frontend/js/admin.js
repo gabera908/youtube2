@@ -12,6 +12,7 @@ function initAdmin() {
   loadFormOptions();
   setupAddForm();
   setupSearch();
+  setupPlaylistForm();
 }
 
 function setupTheme() {
@@ -40,6 +41,7 @@ function setupTabs() {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.getElementById('tab-' + tab).classList.add('active');
       if (tab === 'manage-videos') loadManageVideos();
+      if (tab === 'playlists') loadAdminPlaylists();
     });
   });
 }
@@ -244,6 +246,78 @@ async function fetchVideoInfo(url) {
   } catch (err) {
     console.error('Fetch video info error:', err);
     if (previewEl) previewEl.innerHTML = '';
+  }
+}
+
+/* ===== Admin Playlists ===== */
+function setupPlaylistForm() {
+  var form = document.getElementById('addPlaylistForm');
+  if (!form) return;
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('btnAddPlaylist');
+    var name = document.getElementById('playlistName').value.trim();
+    if (!name) {
+      showToast('أدخل اسم القائمة', 'error');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'جاري الإنشاء...';
+    var result = await createPlaylist({
+      name: name,
+      description: document.getElementById('playlistDesc').value.trim()
+    });
+    btn.disabled = false;
+    btn.textContent = 'إنشاء القائمة';
+    if (result && result.success) {
+      showToast('تم إنشاء القائمة بنجاح!');
+      form.reset();
+      loadAdminPlaylists();
+    } else {
+      showToast((result && result.error && result.error.message) || 'حدث خطأ', 'error');
+    }
+  });
+}
+
+async function loadAdminPlaylists() {
+  var container = document.getElementById('playlistsList');
+  if (!container) return;
+  container.innerHTML = '<div class="empty-msg">جاري التحميل...</div>';
+  var result = await fetchPlaylists();
+  var playlists = (result && result.success && result.data) || [];
+  if (playlists.length === 0) {
+    container.innerHTML = '<div class="empty-msg">لا توجد قوائم تشغيل بعد</div>';
+    return;
+  }
+  container.innerHTML = `
+    <table class="videos-table">
+      <thead>
+        <tr><th>الغلاف</th><th>الاسم</th><th>الفيديوهات</th><th>إجراءات</th></tr>
+      </thead>
+      <tbody>
+        ${playlists.map(function(pl) {
+          return `<tr data-id="${pl.id}">
+            <td>${pl.cover_thumbnail ? `<img class="thumb" src="${pl.cover_thumbnail}" onerror="this.style.display='none'">` : '📚'}</td>
+            <td style="font-weight:600;">${escapeHtml(pl.name || 'بدون اسم')}</td>
+            <td>${pl.video_count || 0}</td>
+            <td>
+              <a href="playlist.html?id=${pl.id}" style="margin-left:8px;">عرض</a>
+              <button class="btn-danger" onclick="handleAdminDeletePlaylist(${pl.id})">حذف</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function handleAdminDeletePlaylist(id) {
+  if (!confirm('حذف هذه القائمة نهائياً؟')) return;
+  var result = await deletePlaylist(id);
+  if (result && result.success) {
+    showToast('تم حذف القائمة');
+    loadAdminPlaylists();
+  } else {
+    showToast((result && result.error && result.error.message) || 'حدث خطأ', 'error');
   }
 }
 
