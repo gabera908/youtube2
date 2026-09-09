@@ -2,7 +2,6 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const pool = require('./config/database');
@@ -12,10 +11,10 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 const videosRouter = require('./routes/videos');
 const categoriesRouter = require('./routes/categories');
 const channelsRouter = require('./routes/channels');
+const playlistsRouter = require('./routes/playlists');
 
 const app = express();
 
-app.use(helmet());
 app.use(cors());
 app.use(compression());
 app.use(morgan('combined'));
@@ -38,6 +37,7 @@ app.use('/api', apiLimiter);
 app.use('/api/videos', videosRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/channels', channelsRouter);
+app.use('/api/playlists', playlistsRouter);
 
 app.use((req, res) => {
   res.status(404).json({ success: false, error: { message: 'Route not found' } });
