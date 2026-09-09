@@ -67,6 +67,29 @@
   <!-- Main Content -->
   <main class="app-main">
     <div class="search-results-info"></div>
+    <div class="search-filters" style="display:flex;gap:10px;flex-wrap:wrap;padding:12px 20px;">
+      <select id="filterPlatform" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:.85rem;">
+        <option value="">كل المنصات</option>
+        <option value="youtube">YouTube</option>
+        <option value="facebook">Facebook</option>
+        <option value="instagram">Instagram</option>
+        <option value="tiktok">TikTok</option>
+        <option value="vimeo">Vimeo</option>
+        <option value="telegram">Telegram</option>
+        <option value="google_drive">Google Drive</option>
+        <option value="dailymotion">Dailymotion</option>
+        <option value="twitch">Twitch</option>
+        <option value="direct">مباشر</option>
+      </select>
+      <select id="filterCategory" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:.85rem;">
+        <option value="">كل التصنيفات</option>
+      </select>
+      <select id="filterSort" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:.85rem;">
+        <option value="newest">الأحدث</option>
+        <option value="popular">الأكثر مشاهدة</option>
+        <option value="oldest">الأقدم</option>
+      </select>
+    </div>
     <div class="video-grid"></div>
     <div class="load-more-wrapper"></div>
   </main>

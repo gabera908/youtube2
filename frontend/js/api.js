@@ -61,8 +61,20 @@ function fetchChannel(slug) {
   return apiRequest(`/channels/${slug}`);
 }
 
-function searchVideos(query) {
-  return apiRequest('/videos', { search: query });
+function searchVideos(query, filters = {}) {
+  return apiRequest('/videos', {
+    search: query,
+    platform: filters.platform,
+    category: filters.category,
+    channel: filters.channel,
+    sort: filters.sort,
+    limit: filters.limit || 24,
+    page: filters.page || 1,
+  });
+}
+
+function fetchSuggestions(query, limit = 8) {
+  return apiRequest('/videos/suggestions', { q: query, limit });
 }
 
 async function apiMutate(method, endpoint, body) {

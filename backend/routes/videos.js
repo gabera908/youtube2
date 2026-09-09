@@ -55,6 +55,7 @@ router.get(
     query('platform').optional().isString().trim(),
     query('search').optional().isString().trim(),
     query('featured').optional().isBoolean().toBoolean(),
+    query('sort').optional().isIn(['newest', 'oldest', 'popular']).withMessage('Invalid sort'),
   ],
   async (req, res, next) => {
     try {
@@ -63,7 +64,14 @@ router.get(
       const page = parseInt(req.query.page, 10) || 1;
       const limit = parseInt(req.query.limit, 10) || 12;
       const offset = (page - 1) * limit;
-      const { category, channel, platform, search, featured } = req.query;
+      const { category, channel, platform, search, featured, sort } = req.query;
+
+      const sortMap = {
+        popular: 'v.views DESC, v.created_at DESC',
+        oldest: 'v.created_at ASC',
+        newest: 'v.created_at DESC',
+      };
+      const orderClause = sortMap[sort] || sortMap.newest;
 
       const where = ['v.is_active = 1'];
       const params = [];
@@ -107,7 +115,7 @@ router.get(
       LEFT JOIN categories c ON v.category_id = c.id
       LEFT JOIN channels ch ON v.channel_id = ch.id
       WHERE ${whereClause}
-      ORDER BY v.created_at DESC
+      ORDER BY ${orderClause}
       LIMIT ? OFFSET ?
     `;
       const [videos] = await pool.query(dataQuery, [...params, limit, offset]);
@@ -122,6 +130,36 @@ router.get(
           totalPages: Math.ceil(total / limit),
         },
       });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// GET /api/videos/suggestions?q=
+router.get(
+  '/suggestions',
+  [
+    query('q').isString().trim().notEmpty().withMessage('Query is required'),
+    query('limit').optional().isInt({ min: 1, max: 20 }).toInt(),
+  ],
+  async (req, res, next) => {
+    try {
+      validate(req);
+
+      const q = `%${req.query.q}%`;
+      const limit = parseInt(req.query.limit, 10) || 8;
+
+      const [rows] = await pool.query(
+        `SELECT id, title, thumbnail_url, platform, views
+         FROM videos
+         WHERE is_active = 1 AND (title LIKE ? OR description LIKE ?)
+         ORDER BY views DESC, created_at DESC
+         LIMIT ?`,
+        [q, q, limit]
+      );
+
+      res.json({ success: true, data: rows });
     } catch (err) {
       next(err);
     }

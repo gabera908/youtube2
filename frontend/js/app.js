@@ -10,6 +10,7 @@ async function initApp() {
   setupTheme();
   setupMenuToggle();
   setupSearch();
+  setupAutocomplete();
   setupKeyboardNavigation();
   setupLazyLoading();
   await loadSidebar();
@@ -749,38 +750,163 @@ async function handleQuickCreatePlaylist() {
 }
 
 /* ===== SEARCH PAGE ===== */
-async function loadSearchPage() {
+function getSearchFiltersFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  const query = params.get('q');
-  if (!query) {
+  return {
+    q: params.get('q') || '',
+    platform: params.get('platform') || '',
+    category: params.get('category') || '',
+    sort: params.get('sort') || 'newest',
+  };
+}
+
+async function loadSearchPage() {
+  const filters = getSearchFiltersFromUrl();
+  if (!filters.q) {
     window.location.href = '../index.html';
     return;
   }
 
-  document.title = `نتائج البحث: ${query} - فيديو بلس`;
+  document.title = `نتائج البحث: ${filters.q} - فيديو بلس`;
 
-  const inputEl = document.querySelector('.search-input');
-  if (inputEl) inputEl.value = query;
+  document.querySelectorAll('.search-input').forEach((el) => {
+    el.value = filters.q;
+  });
 
+  const platformSel = document.getElementById('filterPlatform');
+  const categorySel = document.getElementById('filterCategory');
+  const sortSel = document.getElementById('filterSort');
+
+  if (categorySel && categorySel.options.length <= 1) {
+    const res = await fetchCategories();
+    const list = (res && res.data) || (Array.isArray(res) ? res : []);
+    list.forEach((c) => {
+      const opt = document.createElement('option');
+      opt.value = c.slug;
+      opt.textContent = c.name;
+      categorySel.appendChild(opt);
+    });
+  }
+
+  if (platformSel) platformSel.value = filters.platform;
+  if (categorySel) categorySel.value = filters.category;
+  if (sortSel) sortSel.value = filters.sort;
+
+  [platformSel, categorySel, sortSel].forEach((sel) => {
+    if (sel && !sel.dataset.bound) {
+      sel.dataset.bound = '1';
+      sel.addEventListener('change', applySearchFilters);
+    }
+  });
+
+  await runSearchWithFilters();
+}
+
+function applySearchFilters() {
+  const params = new URLSearchParams(window.location.search);
+  const platform = document.getElementById('filterPlatform');
+  const category = document.getElementById('filterCategory');
+  const sort = document.getElementById('filterSort');
+  if (platform) {
+    if (platform.value) params.set('platform', platform.value);
+    else params.delete('platform');
+  }
+  if (category) {
+    if (category.value) params.set('category', category.value);
+    else params.delete('category');
+  }
+  if (sort) params.set('sort', sort.value);
+  window.location.search = params.toString();
+}
+
+async function runSearchWithFilters() {
+  const filters = getSearchFiltersFromUrl();
   const infoEl = document.querySelector('.search-results-info');
   const grid = document.querySelector('.video-grid');
 
   if (grid) showSkeleton(grid, 8);
 
-  const result = await searchVideos(query);
+  const result = await searchVideos(filters.q, {
+    platform: filters.platform,
+    category: filters.category,
+    sort: filters.sort,
+    limit: 24,
+  });
   hideSkeleton(grid);
 
   if (!result || !result.data) {
     if (grid)
-      grid.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>لا توجد نتائج لـ "${escapeHtml(query)}"</p><button class="btn-retry" onclick="loadSearchPage()">إعادة المحاولة</button></div>`;
+      grid.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>لا توجد نتائج لـ "${escapeHtml(filters.q)}"</p><button class="btn-retry" onclick="loadSearchPage()">إعادة المحاولة</button></div>`;
     if (infoEl) infoEl.textContent = '';
     return;
   }
 
   const total = result.pagination ? result.pagination.total : result.data.length;
-  if (infoEl) infoEl.textContent = `تم العثور على ${total} نتيجة لـ "${query}"`;
+  if (infoEl) infoEl.textContent = `تم العثور على ${total} نتيجة لـ "${filters.q}"`;
 
   renderVideoGrid(grid, result.data);
+}
+
+/* ===== SEARCH AUTOCOMPLETE ===== */
+function setupAutocomplete() {
+  document.querySelectorAll('.search-input').forEach((input) => {
+    if (input.dataset.autocompleteBound) return;
+    input.dataset.autocompleteBound = '1';
+
+    const form = input.closest('form');
+    if (form && getComputedStyle(form).position === 'static') {
+      form.style.position = 'relative';
+    }
+
+    const box = document.createElement('div');
+    box.className = 'search-suggest';
+    box.style.display = 'none';
+    form ? form.appendChild(box) : input.parentNode.appendChild(box);
+
+    let debounce;
+    input.addEventListener('input', () => {
+      clearTimeout(debounce);
+      const q = input.value.trim();
+      if (q.length < 2) {
+        box.style.display = 'none';
+        return;
+      }
+      debounce = setTimeout(async () => {
+        const res = await fetchSuggestions(q, 8);
+        const items = (res && res.success && res.data) || [];
+        if (items.length === 0) {
+          box.style.display = 'none';
+          return;
+        }
+        const inPages = window.location.pathname.includes('/pages/');
+        const prefix = inPages ? '' : 'pages/';
+        box.innerHTML = items
+          .map(
+            (v) => `<div class="search-suggest-item" data-id="${v.id}">
+            ${v.thumbnail_url ? `<img src="${v.thumbnail_url}" alt="" loading="lazy" onerror="this.remove()">` : '<span>🎬</span>'}
+            <span class="search-suggest-title">${escapeHtml(v.title || 'بدون عنوان')}</span>
+          </div>`
+          )
+          .join('');
+        box.style.display = 'block';
+        box.querySelectorAll('.search-suggest-item').forEach((el) => {
+          el.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            window.location.href = `${prefix}watch.html?id=${el.dataset.id}`;
+          });
+        });
+      }, 300);
+    });
+
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        box.style.display = 'none';
+      }, 200);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') box.style.display = 'none';
+    });
+  });
 }
 
 /* ===== UTILITIES ===== */
