@@ -154,6 +154,20 @@ function setupAddForm() {
       video_url: urlInput.value.trim(),
       description: document.getElementById('videoDesc').value.trim()
     };
+
+    if (!payload.video_url) {
+      showToast('أدخل رابط الفيديو', 'error');
+      btn.disabled = false;
+      btn.textContent = 'إضافة الفيديو';
+      return;
+    }
+    if (!payload.title) {
+      showToast('أدخل عنوان الفيديو (روابط Drive لا تجلب العنوان تلقائياً)', 'error');
+      document.getElementById('videoTitle').focus();
+      btn.disabled = false;
+      btn.textContent = 'إضافة الفيديو';
+      return;
+    }
     var catVal = document.getElementById('videoCategory').value;
     var chVal = document.getElementById('videoChannel').value;
     if (catVal) payload.category_id = parseInt(catVal);

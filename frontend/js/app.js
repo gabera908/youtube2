@@ -265,7 +265,7 @@ function createVideoCard(video) {
     window.location.href = `${prefix}watch.html?id=${video.id}`;
   };
 
-  const platform = video.platform || detectPlatform(video.url);
+  const platform = video.platform || detectPlatform(video.video_url || video.url);
   const thumbnail = getThumbnailUrl(video);
   const title = video.title || 'بدون عنوان';
   const channelName =

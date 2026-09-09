@@ -49,7 +49,8 @@ function extractVideoId(url, platform) {
 
 function getEmbedHtml(video) {
   const url = video.url || video.video_url || '';
-  const platform = video.platform || detectPlatform(url);
+  const rawPlatform = video.platform || detectPlatform(url);
+  const platform = rawPlatform === 'google_drive' ? 'google-drive' : rawPlatform;
   const videoId = video.external_id || extractVideoId(url, platform);
 
   try {
@@ -93,7 +94,8 @@ function getEmbedHtml(video) {
 function getThumbnailUrl(video) {
   if (video.thumbnail) return video.thumbnail;
   const url = video.url || video.video_url || '';
-  const platform = video.platform || detectPlatform(url);
+  const rawPlatform = video.platform || detectPlatform(url);
+  const platform = rawPlatform === 'google_drive' ? 'google-drive' : rawPlatform;
   const id = video.external_id || extractVideoId(url, platform);
 
   switch (platform) {
@@ -144,6 +146,7 @@ function getPlatformBadgeClass(platform) {
     vimeo: 'badge-vimeo',
     telegram: 'badge-telegram',
     'google-drive': 'badge-gdrive',
+    google_drive: 'badge-gdrive',
     dailymotion: 'badge-dailymotion',
     twitch: 'badge-twitch',
     streamable: 'badge-streamable',
@@ -162,6 +165,7 @@ function getPlatformLabel(platform) {
     vimeo: 'Vimeo',
     telegram: 'Telegram',
     'google-drive': 'Google Drive',
+    google_drive: 'Google Drive',
     dailymotion: 'Dailymotion',
     twitch: 'Twitch',
     streamable: 'Streamable',
