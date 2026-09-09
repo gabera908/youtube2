@@ -213,6 +213,17 @@ async function fetchVideoInfo(url) {
       previewEl.innerHTML = '<div style="display:flex;gap:12px;margin-top:12px;padding:12px;background:var(--bg-main);border-radius:8px;">' +
         '<img src="' + thumbUrl + '" style="width:160px;height:90px;object-fit:cover;border-radius:6px;">' +
         '<div style="flex:1;"><div style="font-size:0.85rem;color:var(--text-secondary);">YouTube Video</div></div></div>';
+    } else if (url.indexOf('drive.google.com') !== -1) {
+      var driveIdMatch = url.match(/\/d\/([\w-]+)/);
+      var openIdMatch = url.match(/[?&]id=([\w-]+)/);
+      var gFileId = driveIdMatch ? driveIdMatch[1] : (openIdMatch ? openIdMatch[1] : '');
+      if (previewEl) {
+        previewEl.innerHTML = '<div style="display:flex;gap:12px;margin-top:12px;padding:12px;background:var(--bg-main);border-radius:8px;">' +
+          '<div style="width:160px;height:90px;background:#34a853;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;">📁</div>' +
+          '<div style="flex:1;"><div style="font-weight:600;font-size:0.9rem;margin-bottom:4px;">Google Drive Video</div>' +
+          '<div style="font-size:0.78rem;color:var(--text-secondary);">' + escapeHtml(gFileId) + '</div></div></div>';
+      }
+      showToast('تم التعرف على رابط Google Drive!');
     } else if (previewEl) {
       previewEl.innerHTML = '';
     }

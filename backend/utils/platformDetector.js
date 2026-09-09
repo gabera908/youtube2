@@ -55,6 +55,8 @@ function getEmbedUrl(url, platform) {
     case 'google_drive': {
       const match = url.match(/\/d\/([\w-]+)/);
       if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+      const openMatch = url.match(/[?&]id=([\w-]+)/);
+      if (openMatch) return `https://drive.google.com/file/d/${openMatch[1]}/preview`;
       return url;
     }
     case 'direct': {

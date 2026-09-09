@@ -68,7 +68,8 @@ function getEmbedHtml(video) {
         return `<iframe src="${url}" frameborder="0" allowfullscreen style="width:100%;min-height:500px;"></iframe>`;
       case 'google-drive':
         const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-        const fileId = driveMatch ? driveMatch[1] : videoId;
+        const openMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        const fileId = driveMatch ? driveMatch[1] : (openMatch ? openMatch[1] : videoId);
         return `<iframe src="https://drive.google.com/file/d/${fileId}/preview" frameborder="0" allowfullscreen></iframe>`;
       case 'dailymotion':
         const dmId = url.match(/dailymotion\.com\/(?:video|embed\/video)\/([a-zA-Z0-9]+)/);
